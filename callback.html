@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Spotify Callback</title>
+</head>
+<body>
+  <h1>Spotify Authorization Code</h1>
+  <p id="code"></p>
+
+  <script>
+    // Get the "code" parameter from URL
+    const params = new URLSearchParams(window.location.search);
+    const code = params.get('code');
+
+    if (code) {
+      document.getElementById('code').textContent = code;
+      console.log('Spotify authorization code:', code);
+    } else {
+      document.getElementById('code').textContent = 'No code found in URL.';
+    }
+  </script>
+</body>
+</html>
