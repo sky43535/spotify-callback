@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Spotify Now Playing JSON</title>
+  <meta charset="UTF-8" />
+</head>
+<body>
+<script>
+  const client_id = "03875d5ad9e54720bc773382e2d13e80";
+  const client_secret = "96e1b3742b9c4c84bd93106f59390bf6"; // REPLACE before upload!
+  const refresh_token = "AQBR_kbaScaYYVQDM9wdBcNdcZMzeKvp4C2ikaior9tUeT2t9X35kGn5ZNDqkxrieZOfVACnlZ1a15DKEVS2Ljau4bWPu_qkZhahng2DBP65ConrjByQiaGEtpKVl0OGFig";
+
+  let access_token = null;
+
+  async function refreshToken() {
+    const body = new URLSearchParams({
+      grant_type: "refresh_token",
+      refresh_token,
+      client_id,
+      client_secret
+    });
+
+    const res = await fetch("https://accounts.spotify.com/api/token", {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body
+    });
+
+    const data = await res.json();
+    access_token = data.access_token;
+  }
+
+  async function getNowPlaying() {
+    const res = await fetch("https://api.spotify.com/v1/me/player/currently-playing", {
+      headers: { Authorization: "Bearer " + access_token }
+    });
+
+    if (res.status === 204 || res.status === 202) {
+      return null;
+    }
+
+    return await res.json();
+  }
+
+  async function outputJSON() {
+    await refreshToken();
+    const data = await getNowPlaying();
+
+    const result = {
+      track: null,
+      artist: null,
+      progress: null,
+      duration: null,
+      album_art: null
+    };
+
+    if (data && data.item) {
+      result.track = data.item.name;
+      result.artist = data.item.artists.map(a => a.name).join(", ");
+      result.progress = data.progress_ms;
+      result.duration = data.item.duration_ms;
+      result.album_art = data.item.album.images[0].url;
+    }
+
+    // Output JSON as plain text for ESP32 to parse
+    document.body.innerText = JSON.stringify(result);
+  }
+
+  outputJSON();
+</script>
+</body>
+</html>
