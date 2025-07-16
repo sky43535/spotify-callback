@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Refresh Spotify Token</title>
+</head>
+<body style="background:#121212; color:#1db954; font-family: sans-serif; text-align: center; padding-top: 100px;">
+  <h1>Refresh Spotify Access Token</h1>
+
+  <input type="text" id="refreshToken" placeholder="Paste your refresh token" size="80"><br><br>
+  <button onclick="refresh()">Get New Access Token</button>
+  <pre id="output" style="white-space: pre-wrap;"></pre>
+
+  <script>
+    async function refresh() {
+      const refresh_token = document.getElementById("refreshToken").value;
+      const client_id = "03875d5ad9e54720bc773382e2d13e80";
+      const client_secret = "96e1b3742b9c4c84bd93106f59390bf6"; // replace this!
+
+      const body = new URLSearchParams({
+        grant_type: "refresh_token",
+        refresh_token,
+        client_id,
+        client_secret
+      });
+
+      const res = await fetch("https://accounts.spotify.com/api/token", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded"
+        },
+        body
+      });
+
+      const data = await res.json();
+      document.getElementById("output").textContent = JSON.stringify(data, null, 2);
+    }
+  </script>
+</body>
+</html>
