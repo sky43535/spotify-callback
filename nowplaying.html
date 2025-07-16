@@ -1,55 +1,131 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Spotify Now Playing</title>
+  <meta charset="UTF-8">
+  <title>Now Playing</title>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600&display=swap" rel="stylesheet">
   <style>
     body {
-      background: #121212;
-      color: #1DB954;
-      font-family: sans-serif;
-      text-align: center;
-      padding-top: 100px;
+      margin: 0;
+      background: linear-gradient(to bottom right, #000000, #121212);
+      color: white;
+      font-family: 'Orbitron', sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      overflow: hidden;
     }
-    img {
-      border-radius: 10px;
+
+    .glow {
+      font-size: 3em;
+      color: #1DB954;
+      text-shadow:
+        0 0 5px #1DB954,
+        0 0 10px #1DB954,
+        0 0 20px #1DB954,
+        0 0 40px #1DB954;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0% { text-shadow: 0 0 5px #1DB954; }
+      50% { text-shadow: 0 0 20px #1DB954; }
+      100% { text-shadow: 0 0 5px #1DB954; }
+    }
+
+    .cover {
       margin-top: 20px;
       width: 300px;
+      height: 300px;
+      border-radius: 20px;
+      box-shadow: 0 0 30px rgba(0,0,0,0.6);
+      animation: spin 10s linear infinite;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .info {
+      margin-top: 30px;
+      text-align: center;
+    }
+
+    .track {
+      font-size: 1.8em;
+      color: #ffffff;
+      margin-bottom: 5px;
+    }
+
+    .artist {
+      font-size: 1.2em;
+      color: #ccc;
+    }
+
+    .progress {
+      width: 80%;
+      margin-top: 30px;
+      height: 10px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 5px;
+      overflow: hidden;
+    }
+
+    .bar {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #1DB954, #00ffcc);
+      animation: fill 1s linear forwards;
     }
   </style>
 </head>
 <body>
-  <h1>Now Playing on Spotify</h1>
-  <div id="track">Loading...</div>
-  <img id="cover" style="display:none;" />
+  <div class="glow">Now Playing</div>
+  <img class="cover" id="cover" src="" alt="Album Cover">
+  <div class="info">
+    <div class="track" id="track">Loading...</div>
+    <div class="artist" id="artist"></div>
+  </div>
+  <div class="progress"><div class="bar" id="bar"></div></div>
 
   <script>
-    const token = "BQCF3Yd3qh5jl-pCDKXyhkvac9Y-RUI93apAoU7sns1QGXfsKWmjbKoUUe2VM6KVV_BvjfhoAFusDaArTtLzFSevYVvy5UDEng0B52aJwt_KnY-W0KrgJHbhUQqyQGt9hdtnA5isrWyLtj5wy83ZK5x6__lT0DxAiMAtICsrcw-Qp18d7ybCkWv9doKSR6gCz1c8Uvt1duhcGNgic_x8QZj5fj_xzYUhY8auxq2KBXb8B1I";
+    const token = "BQDsGOkTEu3iv1NKMQvvtLfyYch4ppjjIr7e_y1GDrqh1B-SvsKAWT4UzMtcPxfcUXV-i1eDb0vBWaciW7rvckyRbRpJMshyLi-qW2pE-xxTfaShlQ7yn02x3U8sqvxqneT6BJG1M35QaoSMyz3yrtBa--zl39oS_felFJN5NMrtRXHRR4JcKbGmlA-yFe52Z9Tj30M0HOpb2sodlCGod5ROMsn54xiaveVPwS1vPbf6y4s";
 
-    fetch("https://api.spotify.com/v1/me/player/currently-playing", {
-      headers: {
-        Authorization: "Bearer " + token
-      }
-    })
-    .then(res => {
-      if (res.status === 204) {
-        document.getElementById("track").innerText = "Nothing is currently playing.";
+    async function loadNowPlaying() {
+      const res = await fetch("https://api.spotify.com/v1/me/player/currently-playing", {
+        headers: {
+          Authorization: "Bearer " + token
+        }
+      });
+
+      if (res.status === 204 || res.status === 202) {
+        document.getElementById("track").innerText = "Nothing is playing";
+        document.getElementById("artist").innerText = "";
+        document.getElementById("cover").src = "";
+        document.getElementById("bar").style.width = "0%";
         return;
       }
-      return res.json();
-    })
-    .then(data => {
-      if (!data || !data.item) return;
-      const name = data.item.name;
-      const artist = data.item.artists.map(a => a.name).join(", ");
-      const img = data.item.album.images[0].url;
 
-      document.getElementById("track").innerText = `${name} by ${artist}`;
-      document.getElementById("cover").src = img;
-      document.getElementById("cover").style.display = "block";
-    })
-    .catch(err => {
-      document.getElementById("track").innerText = "Error: " + err;
-    });
+      const data = await res.json();
+      if (!data || !data.item) return;
+
+      const track = data.item.name;
+      const artist = data.item.artists.map(a => a.name).join(", ");
+      const cover = data.item.album.images[0].url;
+      const progress = data.progress_ms;
+      const duration = data.item.duration_ms;
+
+      document.getElementById("track").innerText = track;
+      document.getElementById("artist").innerText = artist;
+      document.getElementById("cover").src = cover;
+      document.getElementById("bar").style.width = `${(progress / duration) * 100}%`;
+    }
+
+    loadNowPlaying();
+    setInterval(loadNowPlaying, 5000);
   </script>
 </body>
 </html>
