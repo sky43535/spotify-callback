@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Spotify Token Exchange</title>
+</head>
+<body>
+  <h2>Exchange Spotify Auth Code → Access Token</h2>
+  <input type="text" id="codeInput" placeholder="Paste code here" size="80">
+  <br><br>
+  <button onclick="exchange()">Exchange</button>
+  <pre id="output"></pre>
+
+  <script>
+    async function exchange() {
+      const code = document.getElementById("codeInput").value;
+      const client_id = "03875d5ad9e54720bc773382e2d13e80";
+      const client_secret = "YOUR_CLIENT_SECRET_HERE"; // Replace this before uploading!
+      const redirect_uri = "https://sky43535.github.io/spotify-callback/callback.html";
+
+      const body = new URLSearchParams({
+        grant_type: "authorization_code",
+        code,
+        redirect_uri,
+        client_id,
+        client_secret
+      });
+
+      const res = await fetch("https://accounts.spotify.com/api/token", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded"
+        },
+        body
+      });
+
+      const data = await res.json();
+      document.getElementById("output").textContent = JSON.stringify(data, null, 2);
+    }
+  </script>
+</body>
+</html>
