@@ -1,8 +1,9 @@
-<!DOCTYPE html>
+
+     <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Now Playing</title>
+  <title>Spotify Now Playing</title>
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600&display=swap" rel="stylesheet">
   <style>
     body {
@@ -21,11 +22,7 @@
     .glow {
       font-size: 3em;
       color: #1DB954;
-      text-shadow:
-        0 0 5px #1DB954,
-        0 0 10px #1DB954,
-        0 0 20px #1DB954,
-        0 0 40px #1DB954;
+      text-shadow: 0 0 5px #1DB954, 0 0 20px #1DB954;
       animation: pulse 2s infinite;
     }
 
@@ -56,7 +53,6 @@
 
     .track {
       font-size: 1.8em;
-      color: #ffffff;
       margin-bottom: 5px;
     }
 
@@ -78,7 +74,6 @@
       height: 100%;
       width: 0%;
       background: linear-gradient(90deg, #1DB954, #00ffcc);
-      animation: fill 1s linear forwards;
     }
   </style>
 </head>
@@ -92,13 +87,40 @@
   <div class="progress"><div class="bar" id="bar"></div></div>
 
   <script>
-    const token = "BQDsGOkTEu3iv1NKMQvvtLfyYch4ppjjIr7e_y1GDrqh1B-SvsKAWT4UzMtcPxfcUXV-i1eDb0vBWaciW7rvckyRbRpJMshyLi-qW2pE-xxTfaShlQ7yn02x3U8sqvxqneT6BJG1M35QaoSMyz3yrtBa--zl39oS_felFJN5NMrtRXHRR4JcKbGmlA-yFe52Z9Tj30M0HOpb2sodlCGod5ROMsn54xiaveVPwS1vPbf6y4s";
+    const client_id = "03875d5ad9e54720bc773382e2d13e80";
+    const client_secret = "96e1b3742b9c4c84bd93106f59390bf6"; // Fill in before uploading!
+    const redirect_uri = "https://sky43535.github.io/spotify-callback/callback.html";
 
-    async function loadNowPlaying() {
+    // Set your refresh token once
+    const refresh_token = localStorage.getItem("refresh_token") || "AQBR_kbaScaYYVQDM9wdBcNdcZMzeKvp4C2ikaior9tUeT2t9X35kGn5ZNDqkxrieZOfVACnlZ1a15DKEVS2Ljau4bWPu_qkZhahng2DBP65ConrjByQiaGEtpKVl0OGFig";
+    localStorage.setItem("refresh_token", refresh_token);
+
+    let access_token = null;
+
+    async function refreshToken() {
+      const body = new URLSearchParams({
+        grant_type: "refresh_token",
+        refresh_token,
+        client_id,
+        client_secret
+      });
+
+      const res = await fetch("https://accounts.spotify.com/api/token", {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body
+      });
+
+      const data = await res.json();
+      access_token = data.access_token;
+      console.log("🔄 Access token refreshed:", access_token);
+    }
+
+    async function getNowPlaying() {
+      if (!access_token) return;
+
       const res = await fetch("https://api.spotify.com/v1/me/player/currently-playing", {
-        headers: {
-          Authorization: "Bearer " + token
-        }
+        headers: { Authorization: "Bearer " + access_token }
       });
 
       if (res.status === 204 || res.status === 202) {
@@ -122,10 +144,19 @@
       document.getElementById("artist").innerText = artist;
       document.getElementById("cover").src = cover;
       document.getElementById("bar").style.width = `${(progress / duration) * 100}%`;
+
+      // You can optionally expose this for ESP32 via Firebase or WebSocket here
     }
 
-    loadNowPlaying();
-    setInterval(loadNowPlaying, 5000);
+    async function loop() {
+      await refreshToken();
+      await getNowPlaying();
+      setInterval(async () => {
+        await getNowPlaying();
+      }, 5000);
+    }
+
+    loop();
   </script>
 </body>
 </html>
