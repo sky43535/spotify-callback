@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Spotify Now Playing</title>
+  <style>
+    body {
+      background: #121212;
+      color: #1DB954;
+      font-family: sans-serif;
+      text-align: center;
+      padding-top: 100px;
+    }
+    img {
+      border-radius: 10px;
+      margin-top: 20px;
+      width: 300px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Now Playing on Spotify</h1>
+  <div id="track">Loading...</div>
+  <img id="cover" style="display:none;" />
+
+  <script>
+    const token = "BQCF3Yd3qh5jl-pCDKXyhkvac9Y-RUI93apAoU7sns1QGXfsKWmjbKoUUe2VM6KVV_BvjfhoAFusDaArTtLzFSevYVvy5UDEng0B52aJwt_KnY-W0KrgJHbhUQqyQGt9hdtnA5isrWyLtj5wy83ZK5x6__lT0DxAiMAtICsrcw-Qp18d7ybCkWv9doKSR6gCz1c8Uvt1duhcGNgic_x8QZj5fj_xzYUhY8auxq2KBXb8B1I";
+
+    fetch("https://api.spotify.com/v1/me/player/currently-playing", {
+      headers: {
+        Authorization: "Bearer " + token
+      }
+    })
+    .then(res => {
+      if (res.status === 204) {
+        document.getElementById("track").innerText = "Nothing is currently playing.";
+        return;
+      }
+      return res.json();
+    })
+    .then(data => {
+      if (!data || !data.item) return;
+      const name = data.item.name;
+      const artist = data.item.artists.map(a => a.name).join(", ");
+      const img = data.item.album.images[0].url;
+
+      document.getElementById("track").innerText = `${name} by ${artist}`;
+      document.getElementById("cover").src = img;
+      document.getElementById("cover").style.display = "block";
+    })
+    .catch(err => {
+      document.getElementById("track").innerText = "Error: " + err;
+    });
+  </script>
+</body>
+</html>
